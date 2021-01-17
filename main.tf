@@ -10,15 +10,15 @@ terraform {
 #   }
 # }
 
-provider "azurerm" {
-  version = ">=2.0"
-  # The "feature" block is required for AzureRM provider 2.x.
-  features {}
-}
-variable "myList" {
-    type = "list"
-    default = ["a", "b", "c"]
-}
+# provider "azurerm" {
+#   version = ">=2.0"
+#   # The "feature" block is required for AzureRM provider 2.x.
+#   features {}
+# }
+# variable "myList" {
+#     type = "list"
+#     default = ["a", "b", "c"]
+# }
 
 # terraform {
 #   backend "azurerm" {
