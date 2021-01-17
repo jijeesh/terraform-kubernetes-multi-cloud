@@ -80,28 +80,6 @@ steps:
       terraform plan \
       -out="tfplan"
 
-# - task: TerraformTaskV1@0
-#   displayName: terraform init
-#   inputs:
-#     provider: 'azurerm'
-#     command: 'init'
-#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
-#     backendServiceArm: '$(subscription)'
-#     backendAzureRmResourceGroupName: '$(resourceGroup)'
-#     backendAzureRmStorageAccountName: '$(storageAccount)'
-#     backendAzureRmContainerName: '$(container)'
-#     backendAzureRmKey: '$(tfstateFile)'
-
-# - task: TerraformTaskV1@0
-#   displayName: terraform plan -out=tfplan
-#   inputs:
-#     provider: 'azurerm'
-#     command: 'plan'
-#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
-#     commandOptions: '-out=tfplan'
-#     # commandOptions: '-detailed-exitcode -out=tfplan'
-#     environmentServiceNameAzureRM: '$(subscription)'
-
 - task: PowerShell@2
   displayName: detect any terraform change
   inputs:
@@ -130,12 +108,3 @@ steps:
     script: |
       echo '#######Terraform Apply########'
       terraform apply tfplan
-# - task: TerraformTaskV1@0
-#   displayName: terraform apply tfplan
-#   condition: eq(variables.anyTfChanges, true)
-#   inputs:
-#     provider: 'azurerm'
-#     command: 'apply'
-#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
-#     commandOptions: 'tfplan'
-#     environmentServiceNameAzureRM: '$(subscription)'
