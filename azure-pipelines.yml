@@ -9,7 +9,7 @@ variables:
 - name: InfraProvisioningResoureGroupName
   value: $(environment)-provisioning-rg
 - name: tfBackendStorageAccountName
-  value: $(environment)terraformbackendsa
+  value: $(environment)tfbackendsa
 - name: tfBackendStorageContainerName
   value: terraform-backend-files
 - name: tfBackendFileName
