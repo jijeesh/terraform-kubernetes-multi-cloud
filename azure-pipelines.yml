@@ -33,13 +33,13 @@ steps:
       }
       END-OF-STANZA
   
-  - task: Bash@3
-    inputs:
-      workingDirectory: '$(System.DefaultWorkingDirectory)/'
-      targetType: 'inline'
-      script: |
-        echo "list working directory"
-        ls
+- task: Bash@3
+  inputs:
+    workingDirectory: '$(System.DefaultWorkingDirectory)/'
+    targetType: 'inline'
+    script: |
+      echo "list working directory"
+      ls
 # - task: TerraformInstaller@0
 #   displayName: install Terraform v0.12.28
 #   inputs:
