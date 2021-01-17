@@ -9,6 +9,7 @@ variables:
 
 steps:
 - task: Bash@3
+  displayName: 'AZ Login'
   inputs:
     targetType: 'inline'
     script: |
@@ -16,8 +17,9 @@ steps:
       az login --service-principal -u $(client_id) -p $(client_secret) --tenant $(tenant_id) 
       az account set --subscription "$(subscription)"
       az account list -o table
-    displayName: 'AZ Login'
+    
 - task: Bash@3
+  displayName: 'Create provider'
   inputs:
     workingDirectory: '$(System.DefaultWorkingDirectory)/'
     targetType: 'inline'
@@ -33,8 +35,9 @@ steps:
         tenant_id       = "$(tenant_id)"
       }
       END-OF-STANZA
-    displayName: 'Create provider'
+    
 - task: Bash@3
+  displayName: 'List working Directory'
   inputs:
     workingDirectory: '$(System.DefaultWorkingDirectory)/'
     targetType: 'inline'
@@ -42,60 +45,60 @@ steps:
       echo "list working directory"
       ls
       cat provider.tf
-    displayName: 'List working Directory'
-# - task: TerraformInstaller@0
-#   displayName: install Terraform v0.12.28
-#   inputs:
-#     terraformVersion: '0.12.28'
+    
+- task: TerraformInstaller@0
+  displayName: install Terraform v0.12.28
+  inputs:
+    terraformVersion: '0.12.28'
 
-# - task: TerraformTaskV1@0
-#   displayName: terraform init
-#   inputs:
-#     provider: 'azurerm'
-#     command: 'init'
-#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
-#     backendServiceArm: '$(subscription)'
-#     backendAzureRmResourceGroupName: '$(resourceGroup)'
-#     backendAzureRmStorageAccountName: '$(storageAccount)'
-#     backendAzureRmContainerName: '$(container)'
-#     backendAzureRmKey: '$(tfstateFile)'
+- task: TerraformTaskV1@0
+  displayName: terraform init
+  inputs:
+    provider: 'azurerm'
+    command: 'init'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/'
+    backendServiceArm: '$(subscription)'
+    backendAzureRmResourceGroupName: '$(resourceGroup)'
+    backendAzureRmStorageAccountName: '$(storageAccount)'
+    backendAzureRmContainerName: '$(container)'
+    backendAzureRmKey: '$(tfstateFile)'
 
-# - task: TerraformTaskV1@0
-#   displayName: terraform plan -out=tfplan
-#   inputs:
-#     provider: 'azurerm'
-#     command: 'plan'
-#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
-#     commandOptions: '-out=tfplan'
-#     # commandOptions: '-detailed-exitcode -out=tfplan'
-#     environmentServiceNameAzureRM: '$(subscription)'
+- task: TerraformTaskV1@0
+  displayName: terraform plan -out=tfplan
+  inputs:
+    provider: 'azurerm'
+    command: 'plan'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/'
+    commandOptions: '-out=tfplan'
+    # commandOptions: '-detailed-exitcode -out=tfplan'
+    environmentServiceNameAzureRM: '$(subscription)'
 
-# - task: PowerShell@2
-#   displayName: detect any terraform change
-#   inputs:
-#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
-#     targetType: 'inline'
-#     script: |
-#       # Write-Host "LASTEXITCODE : $LASTEXITCODE"
-#       $plan = $(terraform show -json tfplan | ConvertFrom-Json)
-#       $actions = $plan.resource_changes.change.actions
-#       Write-Host "Terraform actions : $actions"
-#       if (($actions -contains 'create') -or ($actions -contains 'delete') -or ($actions -contains 'update'))
-#       {
-#         Write-Host "Terraform will perform the following actions : $actions"
-#         Write-Host "##vso[task.setvariable variable=anyTfChanges;]true"
-#       }
-#       else
-#       {
-#         Write-Host "There is no change detected in Terraform tfplan file"
-#       }
+- task: PowerShell@2
+  displayName: detect any terraform change
+  inputs:
+    workingDirectory: '$(System.DefaultWorkingDirectory)/'
+    targetType: 'inline'
+    script: |
+      # Write-Host "LASTEXITCODE : $LASTEXITCODE"
+      $plan = $(terraform show -json tfplan | ConvertFrom-Json)
+      $actions = $plan.resource_changes.change.actions
+      Write-Host "Terraform actions : $actions"
+      if (($actions -contains 'create') -or ($actions -contains 'delete') -or ($actions -contains 'update'))
+      {
+        Write-Host "Terraform will perform the following actions : $actions"
+        Write-Host "##vso[task.setvariable variable=anyTfChanges;]true"
+      }
+      else
+      {
+        Write-Host "There is no change detected in Terraform tfplan file"
+      }
 
-# - task: TerraformTaskV1@0
-#   displayName: terraform apply tfplan
-#   condition: eq(variables.anyTfChanges, true)
-#   inputs:
-#     provider: 'azurerm'
-#     command: 'apply'
-#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
-#     commandOptions: 'tfplan'
-#     environmentServiceNameAzureRM: '$(subscription)'
+- task: TerraformTaskV1@0
+  displayName: terraform apply tfplan
+  condition: eq(variables.anyTfChanges, true)
+  inputs:
+    provider: 'azurerm'
+    command: 'apply'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/'
+    commandOptions: 'tfplan'
+    environmentServiceNameAzureRM: '$(subscription)'
