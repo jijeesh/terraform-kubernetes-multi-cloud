@@ -10,6 +10,13 @@ variables:
 steps:
 - task: Bash@3
   inputs:
+    targetType: 'inline'
+    script: |
+      # Write your commands here
+      az login --service-principal -u $(client_id) -p $(client_secret) --tenant $(tenant_id) 
+      az account set --subscription "$(subscription)"
+- task: Bash@3
+  inputs:
     workingDirectory: '$(System.DefaultWorkingDirectory)/'
     targetType: 'inline'
     script: |
