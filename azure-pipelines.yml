@@ -16,6 +16,7 @@ steps:
       az login --service-principal -u $(client_id) -p $(client_secret) --tenant $(tenant_id) 
       az account set --subscription "$(subscription)"
       az account list -o table
+    displayName: 'AZ Login'
 - task: Bash@3
   inputs:
     workingDirectory: '$(System.DefaultWorkingDirectory)/'
@@ -32,7 +33,7 @@ steps:
         tenant_id       = "$(tenant_id)"
       }
       END-OF-STANZA
-  
+    displayName: 'Create provider'
 - task: Bash@3
   inputs:
     workingDirectory: '$(System.DefaultWorkingDirectory)/'
@@ -40,6 +41,8 @@ steps:
     script: |
       echo "list working directory"
       ls
+      cat provider.tf
+    displayName: 'List working Directory'
 # - task: TerraformInstaller@0
 #   displayName: install Terraform v0.12.28
 #   inputs:
