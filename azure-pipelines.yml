@@ -6,6 +6,16 @@ pool:
 
 variables:
 - group: dev
+- name: InfraProvisioningResoureGroupName
+  value: $(environment)-provisioning-rg
+- name: tfBackendStorageAccountName
+  value: $(environment)terraformbackendsa
+- name: tfBackendStorageContainerName
+  value: terraform-backend-files
+- name: tfBackendFileName
+  value: $(environment)-tf-state-file
+- name: tfvarsFile
+  value: $(environment).tfvars
 
 steps:
 - task: Bash@3
@@ -36,6 +46,13 @@ steps:
       }
       END-OF-STANZA
     
+      
+    
+- task: TerraformInstaller@0
+  displayName: install Terraform v0.12.28
+  inputs:
+    terraformVersion: '0.12.28'
+
 - task: Bash@3
   displayName: 'List working Directory'
   inputs:
@@ -45,33 +62,45 @@ steps:
       echo "list working directory"
       ls
       cat provider.tf
-    
-- task: TerraformInstaller@0
-  displayName: install Terraform v0.12.28
-  inputs:
-    terraformVersion: '0.12.28'
 
-- task: TerraformTaskV1@0
-  displayName: terraform init
+- task: Bash@3
+  displayName: 'Terraform init and Plan'
   inputs:
-    provider: 'azurerm'
-    command: 'init'
     workingDirectory: '$(System.DefaultWorkingDirectory)/'
-    backendServiceArm: '$(subscription)'
-    backendAzureRmResourceGroupName: '$(resourceGroup)'
-    backendAzureRmStorageAccountName: '$(storageAccount)'
-    backendAzureRmContainerName: '$(container)'
-    backendAzureRmKey: '$(tfstateFile)'
+    targetType: 'inline'
+    script: |
+      echo '#######Terraform Init########'
+      terraform init \
+      -backend-config="storage_account_name=$(tfBackendStorageAccountName)" \
+      -backend-config="container_name=$(tfBackendStorageContainerName)" \
+      -backend-config="access_key=$(tf-backend-sa-access-key)" \
+      -backend-config="key=$(tfBackendFileName)"
+      
+      echo '#######Terraform Plan########'
+      terraform plan \
+      -out="tfplan"
 
-- task: TerraformTaskV1@0
-  displayName: terraform plan -out=tfplan
-  inputs:
-    provider: 'azurerm'
-    command: 'plan'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/'
-    commandOptions: '-out=tfplan'
-    # commandOptions: '-detailed-exitcode -out=tfplan'
-    environmentServiceNameAzureRM: '$(subscription)'
+# - task: TerraformTaskV1@0
+#   displayName: terraform init
+#   inputs:
+#     provider: 'azurerm'
+#     command: 'init'
+#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
+#     backendServiceArm: '$(subscription)'
+#     backendAzureRmResourceGroupName: '$(resourceGroup)'
+#     backendAzureRmStorageAccountName: '$(storageAccount)'
+#     backendAzureRmContainerName: '$(container)'
+#     backendAzureRmKey: '$(tfstateFile)'
+
+# - task: TerraformTaskV1@0
+#   displayName: terraform plan -out=tfplan
+#   inputs:
+#     provider: 'azurerm'
+#     command: 'plan'
+#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
+#     commandOptions: '-out=tfplan'
+#     # commandOptions: '-detailed-exitcode -out=tfplan'
+#     environmentServiceNameAzureRM: '$(subscription)'
 
 - task: PowerShell@2
   displayName: detect any terraform change
@@ -93,12 +122,20 @@ steps:
         Write-Host "There is no change detected in Terraform tfplan file"
       }
 
-- task: TerraformTaskV1@0
-  displayName: terraform apply tfplan
-  condition: eq(variables.anyTfChanges, true)
+- task: Bash@3
+  displayName: 'Terraform Apply'
   inputs:
-    provider: 'azurerm'
-    command: 'apply'
     workingDirectory: '$(System.DefaultWorkingDirectory)/'
-    commandOptions: 'tfplan'
-    environmentServiceNameAzureRM: '$(subscription)'
+    targetType: 'inline'
+    script: |
+      echo '#######Terraform Apply########'
+      terraform apply tfplan
+# - task: TerraformTaskV1@0
+#   displayName: terraform apply tfplan
+#   condition: eq(variables.anyTfChanges, true)
+#   inputs:
+#     provider: 'azurerm'
+#     command: 'apply'
+#     workingDirectory: '$(System.DefaultWorkingDirectory)/'
+#     commandOptions: 'tfplan'
+#     environmentServiceNameAzureRM: '$(subscription)'
