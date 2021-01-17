@@ -39,7 +39,7 @@ steps:
       STORAGE_ACCOUNT_NAME=$(tfBackendStorageAccountName)
       CONTAINER_NAME=$(tfBackendStorageContainerName)
       # Create resource group
-      az group create --name $(RESOURCE_GROUP_NAME) --location $LOCATION
+      az group create --name $RESOURCE_GROUP_NAME --location $LOCATION
 
       # Create storage account
       az storage account create --resource-group $RESOURCE_GROUP_NAME --name $STORAGE_ACCOUNT_NAME --sku Standard_LRS --encryption-services blob
