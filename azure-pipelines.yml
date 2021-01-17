@@ -27,7 +27,35 @@ steps:
       az login --service-principal -u $(client_id) -p $(client_secret) --tenant $(tenant_id) 
       az account set --subscription "$(subscription)"
       az account list -o table
-    
+
+- task: Bash@3
+  displayName: 'Create TF storage account'
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Write your commands here
+      LOCATION=$(location_name)
+      RESOURCE_GROUP_NAME=$(InfraProvisioningResoureGroupName)
+      STORAGE_ACCOUNT_NAME=$(tfBackendStorageAccountName)
+      CONTAINER_NAME=$(tfBackendStorageContainerName)
+      # Create resource group
+      az group create --name $(RESOURCE_GROUP_NAME) --location $LOCATION
+
+      # Create storage account
+      az storage account create --resource-group $RESOURCE_GROUP_NAME --name $STORAGE_ACCOUNT_NAME --sku Standard_LRS --encryption-services blob
+
+      # Get storage account key
+      ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query [0].value -o tsv)
+
+      # Create blob container
+      az storage container create --name $CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME --account-key $ACCOUNT_KEY
+      
+      # 
+      echo "##vso[task.setvariable variable=tf-backend-sa-access-key;]$ACCOUNT_KEY"
+      echo "storage_account_name: $STORAGE_ACCOUNT_NAME"
+      echo "container_name: $CONTAINER_NAME"
+      echo "access_key: $ACCOUNT_KEY"
+
 - task: Bash@3
   displayName: 'Create provider'
   inputs:
