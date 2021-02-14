@@ -19,9 +19,9 @@ variables:
   value: $(environment).tfvars
 
 stages:
-  - template: ./stage.yaml
-    parameters:
-      name: Dev
-  - template: ./stage.yaml
-    parameters:
-      name: QA
+- template: ./stage.yaml
+  parameters:
+    name: Dev
+- template: ./stage.yaml
+  parameters:
+    name: QA
