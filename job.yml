@@ -1,0 +1,4 @@
+- job: ${{ parameters.name }}
+  pool: ${{ parameters.pool }}
+  steps:
+  - template: step.yml

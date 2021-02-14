@@ -1,0 +1,12 @@
+parameters:
+  name: ''
+  testFile: ''
+
+stages:
+- stage: Test_${{ parameters.name }}
+  jobs:
+  - template: job.yml  # Template reference
+    parameters:
+      name: Ubuntu
+      pool:
+        vmImage: 'ubuntu-latest'
