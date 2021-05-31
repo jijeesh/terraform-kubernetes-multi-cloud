@@ -7,7 +7,7 @@ resource "azuredevops_project" "az-devops-project" {
 
 resource "azuredevops_variable_group" "variablegroup" {
   project_id   = azuredevops_project.az-devops-project.id
-  name         = "Infra Variable Group"
+  name         = "VG-${var.env}"
   description  = "This variable group is created using Terraform"
   allow_access = true
 
