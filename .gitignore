@@ -2,6 +2,7 @@
 [Tt]humbs.db
 *.DS_Store
 provider.tf
+backend.tf
 env.sh
 # Local .terraform directories
 **/.terraform/*
