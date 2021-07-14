@@ -52,15 +52,15 @@ stages:
                   az account set --subscription "$(subscription_id)"
 
           - task: qetza.replacetokens.replacetokens-task.replacetokens@3
-             displayName: 'Replace tokens'
-             enabled: true
-             inputs:
-               rootDirectory: '$(Pipeline.Workspace)/drop/'
-               targetFiles: |               
-                test.sh                
- 
-               escapeType: none
-               keepToken: true
+            displayName: 'Replace tokens in **/*.config'
+            enabled: false
+            inputs:
+              rootDirectory: '$(Pipeline.Workspace)/drop/'
+              targetFiles: |               
+               test.sh                
+
+              escapeType: none
+              keepToken: true
 
 
           - task: PowerShell@2
