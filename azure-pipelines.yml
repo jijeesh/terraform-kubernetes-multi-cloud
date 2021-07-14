@@ -11,14 +11,14 @@ stages:
   - template: ./build.yaml
     parameters:
       library: 'dev'
-      deploymentEnvironmentName: dev
+      deploymentEnvironmentName: dev-01
       stage_name: BuildDev
       subscription_endpoint: 'Visual Studio Enterprise Subscription'
  
   - template: ./deployment.yaml
     parameters:
       library: 'dev'
-      deploymentEnvironmentName: dev
+      deploymentEnvironmentName: dev-02
       deploy_env: dev
       stage_name: 'Dev'
       dependency_stage: 'BuildDev'
