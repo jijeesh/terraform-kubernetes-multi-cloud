@@ -1,0 +1,27 @@
+trigger:
+- main
+
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+- group: dev
+- name: InfraProvisioningResoureGroupName
+  value: $(environment)-provisioning-rg
+- name: tfBackendStorageAccountName
+  value: $(environment)tfbackendsa
+- name: tfBackendStorageContainerName
+  value: terraform-backend-files
+- name: tfBackendFileName
+  value: $(environment)-tf-state-file
+- name: tfvarsFile
+  value: $(environment).tfvars
+
+stages:
+- template: stages/stage.yaml
+  parameters:
+    name: Dev
+- template: stages/stage.yaml
+  parameters:
+    name: QA
