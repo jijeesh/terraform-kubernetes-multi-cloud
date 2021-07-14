@@ -1,0 +1,23 @@
+parameters:
+  library: 'dev'
+  deploymentEnvironmentName: dev
+  stage_name: BuildDev
+  subscription_endpoint: 'Visual Studio Enterprise Subscription'
+
+
+stages:
+- stage: ${{ parameters.stage_name }}
+  jobs:
+  #Build jobe
+    - job: build
+      variables:
+        - name: deploymentName
+          value: ${{ parameters.deploymentEnvironmentName }}
+        # a variable group
+        - group: ${{ parameters.library }}
+      steps:
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish Artifact: drop'
+        inputs:
+            PathtoPublish: '.'
+          
