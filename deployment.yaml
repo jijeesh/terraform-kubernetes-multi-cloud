@@ -1,0 +1,103 @@
+parameters:
+  library: ''
+  deploymentEnvironmentName: ''
+  deploy_env: ''
+  stage_name: ''
+  dependency_stage: ''
+  subscription_endpoint: ''
+
+
+stages:
+- stage: ${{ parameters.stage_name }}
+  dependsOn: []
+  condition: succeeded()
+  jobs:  
+  #Deployment Job
+  - deployment: deploy
+    variables:
+      - name: deploymentName
+        value: ${{ parameters.deploymentEnvironmentName }}
+      - group: ${{ parameters.library }}
+    environment: ${{ parameters.deploy_env }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: Bash@3
+            displayName: 'Deployment'
+            enabled: true
+            inputs:
+              targetType: 'inline'
+              script: |
+                  echo "script"
+
+          - task: Bash@3
+            displayName: 'AZ Install and Login'
+            enabled: false
+            inputs:
+              targetType: 'inline'
+              script: |
+                  # Install AZ Client 
+                  sudo apt-get update -y
+                  sudo apt-get install curl apt-transport-https lsb-release gpg -y
+                  AZ_REPO=$(lsb_release -cs)
+                  echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
+                    sudo tee /etc/apt/sources.list.d/azure-cli.list
+                  sudo apt-get update --allow-unauthenticated -y
+                  sudo apt-get install azure-cli --allow-unauthenticated -y
+                  az --version
+
+                  # Login 
+                  az login --service-principal -u $(client-id) -p $(sp-secret) --tenant $(tenant-id)
+                  az account set --subscription "$(subscription_id)"
+
+          - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+             displayName: 'Replace tokens'
+             enabled: true
+             inputs:
+               rootDirectory: '$(Pipeline.Workspace)/drop/'
+               targetFiles: |               
+                test.sh                
+ 
+               escapeType: none
+               keepToken: true
+
+
+          - task: PowerShell@2
+            displayName: 'Update the Variable group'
+            enabled: false
+            inputs:
+              targetType: 'inline'
+              script: |
+                # Make sure the variable library ID exists
+                # The task works like this: 
+                # 1. GET the library variables as JSON
+                # 2. Update only the properties that requires changes 
+                # 3. PUT the json again to the library 
+
+                $collectionurl = "https://dev.azure.com/jijeesha"
+                $project = "CAP"
+                $variablegroupid = "$(${{ parameters.cst_library_id_prefix }}-environment_library_id)" #Variable Group which needs to be updated
+                $token = "$(System.AccessToken)"
+
+                # Base64-encodes the Personal Access Token (PAT) appropriately
+                $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "", $token)))
+                $baseUri = "$collectionurl/$project/_apis/distributedtask/variablegroups/$($variablegroupid)?api-version=5.0-preview.1"
+                $vgresponse = Invoke-RestMethod -Method Get -Uri $baseUri -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } 
+
+
+
+                # linkerd_reset
+                $vgresponse.variables."linkerd_reset".value = 'false'
+
+
+                ####****************** update the modified object **************************
+                $json = @($vgresponse) | ConvertTo-Json -Depth 99
+                $updatedvg = Invoke-RestMethod -Uri $baseUri -Method Put -Body $json -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) }
+
+
+                write-host "==========================================================" 
+                write-host "Customer Variable library updated successfully"
+                write-host "=========================================================="
+
+

@@ -1,8 +1,8 @@
 parameters:
-  library: 'dev'
-  deploymentEnvironmentName: dev
-  stage_name: BuildDev
-  subscription_endpoint: 'Visual Studio Enterprise Subscription'
+  library: ''
+  deploymentEnvironmentName: ''
+  stage_name: ''
+  subscription_endpoint: ''
 
 
 stages:
