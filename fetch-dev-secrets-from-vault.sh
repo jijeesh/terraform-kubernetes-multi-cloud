@@ -35,10 +35,6 @@ echo "# ----------------------- "
 echo "# Fetched the following secrets from ${KEY_VAULT} on "`date`
 
 
-store_secret "KEY_VAULT_URI" "https://${KEY_VAULT}.vault.azure.net/"
-store_secret_from_keyvault "KEY_VAULT_CLIENT_ID" "kv-sp-app-id"
-store_secret_from_keyvault "KEY_VAULT_CLIENT_SECRET" "kv-sp-password"
-store_secret_from_keyvault "KEY_VAULT_TENANT_ID" "kv-sp-tenant"
-
+fetch_secret_from_keyvault 
 echo "# End of fetched secrets. "
 echo "# ----------------------- "
