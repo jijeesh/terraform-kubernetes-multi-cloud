@@ -1,0 +1,126 @@
+parameters:
+  library: ''
+  deploymentEnvironmentName: ''
+  stage_name: ''
+
+
+stages:
+- stage: ${{ parameters.stage_name }}
+  dependsOn: ["${{ parameters.dependency_stage }}"]
+  condition: succeeded()
+  jobs:  
+  #Deployment Job
+  - deployment: deploy
+    variables:
+      - name: deploymentName
+        value: ${{ parameters.deploymentEnvironmentName }}
+      - group: ${{ parameters.library }}
+      - group: ${{ parameters.library_env }}
+    environment: ${{ parameters.deploy_env }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: Bash@3
+            displayName: 'Deployment'
+            enabled: true
+            inputs:
+              targetType: 'inline'
+              script: |
+                  echo "script"
+
+          - task: Bash@3
+            displayName: 'AZ Install and Login'
+            enabled: true
+            inputs:
+              targetType: 'inline'
+              script: |
+                  # Install AZ Client 
+                  sudo apt-get update -y
+                  sudo apt-get install curl apt-transport-https lsb-release gpg -y
+                  AZ_REPO=$(lsb_release -cs)
+                  echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
+                    sudo tee /etc/apt/sources.list.d/azure-cli.list
+                  sudo apt-get update --allow-unauthenticated -y
+                  sudo apt-get install azure-cli --allow-unauthenticated -y
+                 
+                  az --version
+
+                  # Login 
+                  az login --service-principal -u $(var-client-id) -p $(var-client-secret) --tenant $(var-tenant-id)
+                  az account set --subscription "$(var-subscription-id)"
+
+
+          - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+            displayName: 'Replace tokens in **/*.config'
+            enabled: true
+            inputs:
+              rootDirectory: '$(Pipeline.Workspace)/drop/'
+              targetFiles: |               
+               **/*.sh                
+
+              escapeType: none
+              keepToken: true
+
+
+          - task: Bash@3
+            displayName: 'Print Script createTerraformBackend.sh'
+            enabled: true            
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(Pipeline.Workspace)/drop/lm-terraform-repo/azure'
+              script: |
+                  cat createTerraformBackend.sh
+                
+          - task: Bash@3
+            displayName: 'Source script createTerraformBackend.sh'
+            enabled: true            
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(Pipeline.Workspace)/drop/lm-terraform-repo/azure'
+              script: |
+                  source createTerraformBackend.sh  
+
+          - task: Bash@3
+            displayName: 'Terraform init and Plan'
+            enabled: false
+            inputs:
+              workingDirectory: '$(Pipeline.Workspace)/drop/lm-terraform-repo/azure'
+              targetType: 'inline'
+              script: |
+                echo '#######Terraform Init########'
+                terraform init 
+                
+                echo '#######Terraform Plan########'
+                terraform plan \
+                -out="tfplan"
+          
+          - task: PowerShell@2
+            displayName: detect any terraform change
+            inputs:
+              workingDirectory: '$(Pipeline.Workspace)/drop/lm-terraform-repo/azure'
+              targetType: 'inline'
+              script: |
+                # Write-Host "LASTEXITCODE : $LASTEXITCODE"
+                $plan = $(terraform show -json tfplan | ConvertFrom-Json)
+                $actions = $plan.resource_changes.change.actions
+                Write-Host "Terraform actions : $actions"
+                if (($actions -contains 'create') -or ($actions -contains 'delete') -or ($actions -contains 'update'))
+                {
+                  Write-Host "Terraform will perform the following actions : $actions"
+                  Write-Host "##vso[task.setvariable variable=anyTfChanges;]true"
+                }
+                else
+                {
+                  Write-Host "There is no change detected in Terraform tfplan file"
+                }
+          
+          - task: Bash@3
+            displayName: 'Terraform Apply'
+            enabled: false
+            inputs:
+              workingDirectory: '$(Pipeline.Workspace)/drop/lm-terraform-repo/azure'
+              targetType: 'inline'
+              script: |
+                echo '#######Terraform Apply########'
+                terraform apply tfplan                
