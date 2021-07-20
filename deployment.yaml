@@ -53,7 +53,7 @@ stages:
 
           - task: qetza.replacetokens.replacetokens-task.replacetokens@3
             displayName: 'Replace tokens in **/*.config'
-            enabled: true
+            enabled: false
             inputs:
               rootDirectory: '$(Pipeline.Workspace)/drop/'
               targetFiles: |               

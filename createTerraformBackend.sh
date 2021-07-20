@@ -16,13 +16,14 @@ yellow() { tput setaf 3; cat - ; tput sgr0; return; }
 cyan()   { tput setaf 6; cat - ; tput sgr0; return; }
 
 # Set default values
-rg=#{resource_group}#
-loc=#{location}#
-environment=#{environment}#
-groupid=#{groupid}#
+rg=$(resource_group)
+loc=$(location)
+environment=$(environment)
+groupid=$(groupid)
+subId=$(var-subscription-id)
 stage="${environment}${groupid}"
 saName="lmqadevops1234567891012${stage}"
-subId=#{var-subscription-id}#
+
 # saName="${1:=$tfstate${stage}$(tr -dc "[:lower:][:digit:]" < /dev/urandom | head -c 10)}"
 containerName="terraform"
 
