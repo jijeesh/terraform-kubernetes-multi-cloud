@@ -28,7 +28,9 @@ saName="lmqadevops1234567891012${stage}"
 containerName="terraform"
 
 
-
+if [ $(az group exists --name $rg) = false ]; then
+    az group create --name $rg --location $loc
+fi
 
 # Create the storage account
 
