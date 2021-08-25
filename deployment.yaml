@@ -32,21 +32,32 @@ stages:
                   echo "script"
 
           - task: Bash@3
-            displayName: 'AZ Install and Login'
-            enabled: false
+            displayName: 'Install Packages'
+            enabled: true
             inputs:
               targetType: 'inline'
               script: |
-                  # Install AZ Client 
-                  sudo apt-get update -y
+                  echo "script"
+                  sudo apt-get update --allow-unauthenticated -y
+                  sudo apt-get install -y gnupg software-properties-common  ca-certificates curl apt-transport-https lsb-release gnupg
+                  curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+                  sudo apt-add-repository "deb [rch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
                   sudo apt-get install curl apt-transport-https lsb-release gpg -y
                   AZ_REPO=$(lsb_release -cs)
                   echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | \
                     sudo tee /etc/apt/sources.list.d/azure-cli.list
                   sudo apt-get update --allow-unauthenticated -y
-                  sudo apt-get install azure-cli --allow-unauthenticated -y
+                  sudo apt-get install azure-cli terraform --allow-unauthenticated -y
                   az --version
+                  terraform -version
 
+
+          - task: Bash@3
+            displayName: 'AZ Install and Login'
+            enabled: false
+            inputs:
+              targetType: 'inline'
+              script: |
                   # Login 
                   az login --service-principal -u $(client-id) -p $(sp-secret) --tenant $(tenant-id)
                   az account set --subscription "$(subscription_id)"
@@ -61,6 +72,14 @@ stages:
 
               escapeType: none
               keepToken: true
+
+          - task: Bash@3
+            displayName: 'Create Terraform Backend
+            enabled: false
+            inputs:
+              targetType: 'inline'
+              script: |
+                  # source 
 
 
           - task: PowerShell@2
